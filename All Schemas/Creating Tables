@@ -1,1 +1,177 @@
+/* =========================================
+   DATABASE SCHEMA: Retail & E-commerce System
+   ========================================= */
 
+-- ========================
+-- 1. CUSTOMERS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Customers', 'U') IS NOT NULL
+    DROP TABLE dbo.Customers;
+GO
+
+CREATE TABLE dbo.Customers (
+    customer_id        INT PRIMARY KEY,
+    first_name         VARCHAR(50)  NOT NULL,
+    last_name          VARCHAR(50)  NOT NULL,
+    email              VARCHAR(100) UNIQUE NOT NULL,
+    phone              VARCHAR(50),
+    city               VARCHAR(50),
+    registration_date  DATETIME DEFAULT GETDATE()
+);
+GO
+
+-- ========================
+-- 2. CATEGORIES TABLE
+-- ========================
+IF OBJECT_ID('dbo.Categories', 'U') IS NOT NULL
+    DROP TABLE dbo.Categories;
+GO
+
+CREATE TABLE dbo.Categories (
+    category_id    INT PRIMARY KEY,
+    category_name  VARCHAR(50) UNIQUE NOT NULL,
+    description    VARCHAR(100)
+);
+GO
+
+-- ========================
+-- 3. PRODUCTS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Products', 'U') IS NOT NULL
+    DROP TABLE dbo.Products;
+GO
+
+CREATE TABLE dbo.Products (
+    product_id      INT PRIMARY KEY,
+    product_name    VARCHAR(50) NOT NULL,
+    category_id     INT NOT NULL,
+    price           INT CHECK (price > 0),
+    stock_quantity  INT CHECK (stock_quantity >= 0),
+    is_active       BIT DEFAULT 1,
+    created_date    DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Products_Category
+        FOREIGN KEY (category_id)
+        REFERENCES dbo.Categories(category_id)
+);
+GO
+
+-- ========================
+-- 4. SUPPLIERS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Suppliers', 'U') IS NOT NULL
+    DROP TABLE dbo.Suppliers;
+GO
+
+CREATE TABLE dbo.Suppliers (
+    supplier_id     INT PRIMARY KEY,
+    supplier_name   VARCHAR(100),
+    contact_email   VARCHAR(100) UNIQUE,
+    city            VARCHAR(50),
+    phone           VARCHAR(50)
+);
+GO
+
+-- ========================
+-- 5. ORDERS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Orders', 'U') IS NOT NULL
+    DROP TABLE dbo.Orders;
+GO
+
+CREATE TABLE dbo.Orders (
+    order_id      INT PRIMARY KEY,
+    customer_id   INT NOT NULL,
+    order_status  VARCHAR(50) CHECK (
+        order_status IN ('PENDING','PROCESSING','SHIPPED','DELIVERED','CANCELLED')
+    ),
+    order_date    DATETIME DEFAULT GETDATE(),
+    total_amount  DECIMAL(10,2),
+
+    CONSTRAINT FK_Orders_Customer
+        FOREIGN KEY (customer_id)
+        REFERENCES dbo.Customers(customer_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+GO
+
+-- ========================
+-- 6. ORDER ITEMS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Order_Items', 'U') IS NOT NULL
+    DROP TABLE dbo.Order_Items;
+GO
+
+CREATE TABLE dbo.Order_Items (
+    order_item_id  INT PRIMARY KEY,
+    order_id       INT,
+    product_id     INT,
+    quantity       INT CHECK (quantity > 0),
+    unit_price     INT,
+    line_total     AS (quantity * unit_price),
+
+    CONSTRAINT FK_OrderItems_Order
+        FOREIGN KEY (order_id)
+        REFERENCES dbo.Orders(order_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_OrderItems_Product
+        FOREIGN KEY (product_id)
+        REFERENCES dbo.Products(product_id)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+);
+GO
+
+-- ========================
+-- 7. PURCHASE ORDERS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Purchase_Orders', 'U') IS NOT NULL
+    DROP TABLE dbo.Purchase_Orders;
+GO
+
+CREATE TABLE dbo.Purchase_Orders (
+    purchase_id   INT PRIMARY KEY,
+    supplier_id   INT,
+    purchase_date DATETIME DEFAULT GETDATE(),
+    total_cost    DECIMAL(10,2) DEFAULT 0,
+    status        VARCHAR(20) CHECK (status IN ('Pending','Received')),
+
+    CONSTRAINT FK_PurchaseOrders_Supplier
+        FOREIGN KEY (supplier_id)
+        REFERENCES dbo.Suppliers(supplier_id)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+);
+GO
+
+-- ========================
+-- 8. PURCHASE ITEMS TABLE
+-- ========================
+IF OBJECT_ID('dbo.Purchase_Items', 'U') IS NOT NULL
+    DROP TABLE dbo.Purchase_Items;
+GO
+
+CREATE TABLE dbo.Purchase_Items (
+    purchase_item_id  INT PRIMARY KEY,
+    purchase_id       INT NOT NULL,
+    product_id        INT NOT NULL,
+    quantity          INT CHECK (quantity > 0),
+    unit_cost         DECIMAL(10,2),
+    line_cost         AS (quantity * unit_cost),
+
+    CONSTRAINT FK_PurchaseItems_Purchase
+        FOREIGN KEY (purchase_id)
+        REFERENCES dbo.Purchase_Orders(purchase_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_PurchaseItems_Product
+        FOREIGN KEY (product_id)
+        REFERENCES dbo.Products(product_id)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+);
+GO
