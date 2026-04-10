@@ -1,0 +1,118 @@
+/* =========================================
+   DML OPERATIONS (DATA MANIPULATION)
+   ========================================= */
+
+USE SQL_Project;
+GO
+
+-- ========================
+-- 9. UPDATE DISCOUNT (Electronics → 10%)
+-- ========================
+UPDATE p
+SET discount_percentage = 10
+FROM Products p
+JOIN Categories c
+    ON p.category_id = c.category_id
+WHERE c.category_name = 'Electronics';
+GO
+
+
+-- ========================
+-- 10. INSERT NEW ORDER WITH ITEMS
+-- ========================
+
+-- Insert Order
+INSERT INTO Orders (order_id, customer_id, order_status, order_date, total_amount)
+VALUES (7, 1, 'PENDING', GETDATE(), 0);
+
+-- Insert Order Items
+INSERT INTO Order_Items (order_item_id, order_id, product_id, quantity, unit_price)
+VALUES 
+(31, 7, 6, 2, 2999),
+(32, 7, 11, 3, 599);
+
+-- Update Total Amount
+UPDATE Orders
+SET total_amount = (
+    SELECT SUM(line_total)
+    FROM Order_Items
+    WHERE order_id = 7
+)
+WHERE order_id = 7;
+GO
+
+
+-- ========================
+-- 11. CANCEL OLD PENDING ORDERS
+-- ========================
+UPDATE Orders
+SET order_status = 'CANCELLED'
+WHERE order_status = 'PENDING'
+  AND order_date < DATEADD(DAY, -7, GETDATE());
+GO
+
+
+-- ========================
+-- 12. DELETE OLD CANCELLED ORDERS
+-- ========================
+DELETE FROM Orders
+WHERE order_status = 'CANCELLED'
+  AND order_date < '2026-03-01';
+GO
+
+
+-- ========================
+-- 13. INCREASE LOW STOCK (+10)
+-- ========================
+UPDATE Products
+SET stock_quantity = stock_quantity + 10
+WHERE stock_quantity < 20;
+GO
+
+
+-- ========================
+-- 14. INSERT PURCHASE ORDER + ITEMS
+-- ========================
+
+-- Insert Purchase Order
+INSERT INTO Purchase_Orders (purchase_id, supplier_id, purchase_date, total_cost, status)
+VALUES (6, 1, GETDATE(), 0, 'PENDING');
+
+-- Insert Purchase Items
+INSERT INTO Purchase_Items (purchase_item_id, purchase_id, product_id, quantity, unit_cost)
+VALUES
+(15, 6, 1, 12, 50000),
+(16, 6, 2, 3, 5000),
+(17, 6, 3, 1, 20000);
+
+-- Update Total Cost
+UPDATE Purchase_Orders
+SET total_cost = (
+    SELECT SUM(line_cost)
+    FROM Purchase_Items
+    WHERE purchase_id = 6
+)
+WHERE purchase_id = 6;
+GO
+
+
+-- ========================
+-- 15. DEACTIVATE OUT-OF-STOCK PRODUCTS
+-- ========================
+UPDATE Products
+SET is_active = 0
+WHERE stock_quantity = 0;
+GO
+
+
+-- ========================
+-- 16. DELETE OLD PENDING PURCHASE ITEMS
+-- ========================
+DELETE FROM Purchase_Items
+WHERE purchase_id IN (
+    SELECT purchase_id
+    FROM Purchase_Orders
+    WHERE status = 'PENDING'
+      AND purchase_date < DATEADD(DAY, -30, GETDATE())
+);
+GO
