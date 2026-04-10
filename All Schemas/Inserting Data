@@ -1,0 +1,110 @@
+/* =========================================
+   DATA LOADING SCRIPT (BULK INSERT)
+   ========================================= */
+
+USE SQL_Project;
+GO
+
+/*
+IMPORTANT:
+- Place all CSV files inside a folder like: /data/
+- Update file paths before running (SQL Server needs local access)
+*/
+
+-- ========================
+-- 1. CUSTOMERS
+-- ========================
+BULK INSERT dbo.Customers
+FROM 'C:\SQL_Project\data\customers.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 2. CATEGORIES
+-- ========================
+BULK INSERT dbo.Categories
+FROM 'C:\SQL_Project\data\categories.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 3. PRODUCTS
+-- ========================
+BULK INSERT dbo.Products
+FROM 'C:\SQL_Project\data\products.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 4. SUPPLIERS
+-- ========================
+BULK INSERT dbo.Suppliers
+FROM 'C:\SQL_Project\data\suppliers.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 5. ORDERS
+-- ========================
+BULK INSERT dbo.Orders
+FROM 'C:\SQL_Project\data\orders.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '0x0a',
+    CODEPAGE = '65001',
+    TABLOCK
+);
+
+-- ========================
+-- 6. ORDER ITEMS
+-- ========================
+BULK INSERT dbo.Order_Items
+FROM 'C:\SQL_Project\data\order_items.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 7. PURCHASE ORDERS
+-- ========================
+BULK INSERT dbo.Purchase_Orders
+FROM 'C:\SQL_Project\data\purchase_orders.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+
+-- ========================
+-- 8. PURCHASE ITEMS
+-- ========================
+BULK INSERT dbo.Purchase_Items
+FROM 'C:\SQL_Project\data\purchase_items.csv'
+WITH (
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    TABLOCK
+);
+GO
