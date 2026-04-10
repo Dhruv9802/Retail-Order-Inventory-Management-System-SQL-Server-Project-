@@ -1,0 +1,4 @@
+DROP VIEW v_order_summary;
+DROP VIEW v_product_inventory;
+DROP VIEW v_daily_sales;
+DROP VIEW v_customer_summary;
