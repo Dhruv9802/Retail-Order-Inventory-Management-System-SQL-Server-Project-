@@ -1,0 +1,170 @@
+/* =========================================
+   ADVANCED SQL CHALLENGES
+   ========================================= */
+
+USE SQL_Project;
+GO
+
+-- ========================
+-- 41. CUSTOMERS WITH ≥ 3 CATEGORIES
+-- ========================
+SELECT 
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    COUNT(DISTINCT p.category_id) AS category_count
+FROM Customers c
+JOIN Orders o ON c.customer_id = o.customer_id
+JOIN Order_Items oi ON o.order_id = oi.order_id
+JOIN Products p ON oi.product_id = p.product_id
+GROUP BY c.customer_id, c.first_name, c.last_name
+HAVING COUNT(DISTINCT p.category_id) >= 3;
+GO
+
+
+-- ========================
+-- 42. ESTIMATED PROFIT PER PRODUCT
+-- ========================
+SELECT 
+    p.product_id,
+    p.product_name,
+    ISNULL(SUM(oi.line_total), 0) AS total_revenue,
+    ISNULL(AVG(pi.unit_cost), 0) * ISNULL(SUM(oi.quantity), 0) AS estimated_cost,
+    ISNULL(SUM(oi.line_total), 0) - 
+    (ISNULL(AVG(pi.unit_cost), 0) * ISNULL(SUM(oi.quantity), 0)) AS profit
+FROM Products p
+LEFT JOIN Order_Items oi 
+    ON p.product_id = oi.product_id
+LEFT JOIN Purchase_Items pi 
+    ON p.product_id = pi.product_id
+GROUP BY p.product_id, p.product_name;
+GO
+
+
+-- ========================
+-- 43. TOP PRODUCT PER CATEGORY
+-- ========================
+SELECT 
+    category_name,
+    product_name,
+    total_quantity_sold
+FROM (
+    SELECT 
+        c.category_name,
+        p.product_name,
+        SUM(oi.quantity) AS total_quantity_sold,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.category_id 
+            ORDER BY SUM(oi.quantity) DESC
+        ) AS rnk
+    FROM Categories c
+    JOIN Products p ON c.category_id = p.category_id
+    JOIN Order_Items oi ON p.product_id = oi.product_id
+    GROUP BY c.category_id, c.category_name, p.product_name
+) t
+WHERE rnk = 1;
+GO
+
+
+-- ========================
+-- 44. ORDERS WITHIN 7 DAYS OF REGISTRATION
+-- ========================
+SELECT 
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    o.order_id,
+    c.registration_date,
+    o.order_date,
+    DATEDIFF(DAY, c.registration_date, o.order_date) AS day_difference
+FROM Customers c
+JOIN Orders o 
+    ON c.customer_id = o.customer_id
+WHERE DATEDIFF(DAY, c.registration_date, o.order_date) <= 7;
+GO
+
+
+-- ========================
+-- 45. LOW STOCK ALERT
+-- ========================
+SELECT  
+    p.product_name,
+    c.category_name,
+    p.stock_quantity,
+    (50 - p.stock_quantity) AS recommended_restock
+FROM Products p
+JOIN Categories c 
+    ON p.category_id = c.category_id
+WHERE p.stock_quantity < 50;
+GO
+
+
+-- ========================
+-- 46. HIGH REVENUE SUPPLIERS
+-- ========================
+SELECT 
+    s.supplier_id,
+    s.supplier_name,
+    SUM(oi.line_total) AS total_revenue
+FROM Suppliers s
+JOIN Purchase_Orders po 
+    ON s.supplier_id = po.supplier_id
+JOIN Purchase_Items pi 
+    ON po.purchase_id = pi.purchase_id
+JOIN Products p 
+    ON pi.product_id = p.product_id
+JOIN Order_Items oi 
+    ON p.product_id = oi.product_id
+GROUP BY s.supplier_id, s.supplier_name
+HAVING SUM(oi.line_total) > 100000;
+GO
+
+
+-- ========================
+-- 47. RUNNING TOTAL (MARCH 2026)
+-- ========================
+SELECT 
+    CAST(order_date AS DATE) AS sale_date,
+    SUM(total_amount) AS daily_revenue,
+    SUM(SUM(total_amount)) OVER (
+        ORDER BY CAST(order_date AS DATE)
+    ) AS running_total
+FROM Orders
+WHERE YEAR(order_date) = 2026 
+  AND MONTH(order_date) = 3
+GROUP BY CAST(order_date AS DATE)
+ORDER BY sale_date;
+GO
+
+
+-- ========================
+-- 48. PRODUCTS BOUGHT TOGETHER
+-- ========================
+SELECT 
+    p1.product_name AS product_1,
+    p2.product_name AS product_2,
+    COUNT(*) AS times_bought_together
+FROM Order_Items oi1
+JOIN Order_Items oi2 
+    ON oi1.order_id = oi2.order_id
+   AND oi1.product_id < oi2.product_id
+JOIN Products p1 
+    ON oi1.product_id = p1.product_id
+JOIN Products p2 
+    ON oi2.product_id = p2.product_id
+GROUP BY p1.product_name, p2.product_name
+ORDER BY times_bought_together DESC;
+GO
+
+
+-- ========================
+-- 49. RECALCULATE ORDER TOTALS
+-- ========================
+UPDATE o
+SET o.total_amount = oi.total_sum
+FROM Orders o
+JOIN (
+    SELECT 
+        order_id, 
+        SUM(line_total) AS total_sum
+    FROM Order_Items
+    GROUP BY order_id
+) oi 
+    ON o.order_id = oi.order_id;
+GO
