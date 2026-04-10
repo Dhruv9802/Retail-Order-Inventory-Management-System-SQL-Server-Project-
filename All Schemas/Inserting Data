@@ -14,7 +14,7 @@ IMPORTANT:
 -- ========================
 -- 1. CUSTOMERS
 -- ========================
-BULK INSERT dbo.Customers
+BULK INSERT Customers
 FROM 'C:\SQL_Project\data\customers.csv'
 WITH (
     FIRSTROW = 2,
@@ -26,7 +26,7 @@ WITH (
 -- ========================
 -- 2. CATEGORIES
 -- ========================
-BULK INSERT dbo.Categories
+BULK INSERT Categories
 FROM 'C:\SQL_Project\data\categories.csv'
 WITH (
     FIRSTROW = 2,
@@ -38,7 +38,7 @@ WITH (
 -- ========================
 -- 3. PRODUCTS
 -- ========================
-BULK INSERT dbo.Products
+BULK INSERT Products
 FROM 'C:\SQL_Project\data\products.csv'
 WITH (
     FIRSTROW = 2,
@@ -50,7 +50,7 @@ WITH (
 -- ========================
 -- 4. SUPPLIERS
 -- ========================
-BULK INSERT dbo.Suppliers
+BULK INSERT Suppliers
 FROM 'C:\SQL_Project\data\suppliers.csv'
 WITH (
     FIRSTROW = 2,
@@ -62,7 +62,7 @@ WITH (
 -- ========================
 -- 5. ORDERS
 -- ========================
-BULK INSERT dbo.Orders
+BULK INSERT Orders
 FROM 'C:\SQL_Project\data\orders.csv'
 WITH (
     FIRSTROW = 2,
@@ -75,7 +75,7 @@ WITH (
 -- ========================
 -- 6. ORDER ITEMS
 -- ========================
-BULK INSERT dbo.Order_Items
+BULK INSERT Order_Items
 FROM 'C:\SQL_Project\data\order_items.csv'
 WITH (
     FIRSTROW = 2,
@@ -87,7 +87,7 @@ WITH (
 -- ========================
 -- 7. PURCHASE ORDERS
 -- ========================
-BULK INSERT dbo.Purchase_Orders
+BULK INSERT Purchase_Orders
 FROM 'C:\SQL_Project\data\purchase_orders.csv'
 WITH (
     FIRSTROW = 2,
@@ -99,7 +99,7 @@ WITH (
 -- ========================
 -- 8. PURCHASE ITEMS
 -- ========================
-BULK INSERT dbo.Purchase_Items
+BULK INSERT Purchase_Items
 FROM 'C:\SQL_Project\data\purchase_items.csv'
 WITH (
     FIRSTROW = 2,
