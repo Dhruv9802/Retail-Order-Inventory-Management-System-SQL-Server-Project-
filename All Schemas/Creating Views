@@ -1,0 +1,136 @@
+USE sql_project;
+GO
+
+/* =========================================
+   VIEWS: ANALYTICS & REPORTING
+   ========================================= */
+
+-- ========================
+-- 1. ORDER SUMMARY VIEW
+-- ========================
+CREATE OR ALTER VIEW dbo.v_order_summary AS
+SELECT 
+    o.order_id,
+    o.order_date,
+    o.order_status,
+    o.total_amount,
+
+    c.customer_id,
+    c.first_name + ' ' + c.last_name AS customer_name,
+    c.email,
+    c.city,
+
+    COUNT(oi.order_item_id) AS items_count,
+    SUM(oi.quantity) AS total_quantity
+
+FROM dbo.Orders o
+JOIN dbo.Customers c 
+    ON o.customer_id = c.customer_id
+JOIN dbo.Order_Items oi
+    ON o.order_id = oi.order_id
+
+GROUP BY 
+    o.order_id,
+    o.order_date,
+    o.order_status,
+    o.total_amount,
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    c.city;
+GO
+
+
+-- ========================
+-- 2. PRODUCT INVENTORY VIEW
+-- ========================
+CREATE OR ALTER VIEW dbo.v_product_inventory AS
+SELECT 
+    p.product_id,
+    p.product_name,
+    ca.category_name,
+    p.price,
+    p.stock_quantity,
+
+    ISNULL(SUM(pi.quantity), 0) AS total_purchased,
+    ISNULL(SUM(oi.quantity), 0) AS total_sold
+
+FROM dbo.Products p
+JOIN dbo.Categories ca
+    ON p.category_id = ca.category_id
+LEFT JOIN dbo.Order_Items oi
+    ON p.product_id = oi.product_id
+LEFT JOIN dbo.Purchase_Items pi
+    ON p.product_id = pi.product_id
+
+GROUP BY 
+    p.product_id,
+    p.product_name,
+    ca.category_name,
+    p.price,
+    p.stock_quantity;
+GO
+
+
+-- ========================
+-- 3. DAILY SALES VIEW
+-- ========================
+CREATE OR ALTER VIEW dbo.v_daily_sales AS
+SELECT 
+    CAST(o.order_date AS DATE) AS sale_date,
+    COUNT(o.order_id) AS total_orders,
+    SUM(o.total_amount) AS total_sales,
+    AVG(o.total_amount) AS avg_order_value
+
+FROM dbo.Orders o
+GROUP BY CAST(o.order_date AS DATE);
+GO
+
+
+-- ========================
+-- 4. CUSTOMER SUMMARY VIEW
+-- ========================
+CREATE OR ALTER VIEW dbo.v_customer_summary AS
+SELECT 
+    c.customer_id,
+    c.first_name + ' ' + c.last_name AS customer_name,
+    c.city,
+    c.registration_date,
+
+    COUNT(o.order_id) AS total_orders,
+
+    SUM(CASE 
+        WHEN o.order_status <> 'CANCELLED' 
+        THEN o.total_amount 
+        ELSE 0 
+    END) AS total_spent,
+
+    AVG(CASE 
+        WHEN o.order_status <> 'CANCELLED' 
+        THEN o.total_amount 
+    END) AS avg_order_value,
+
+    MAX(CASE
+        WHEN o.order_status <> 'CANCELLED' 
+        THEN o.order_date
+    END) AS last_order_date
+
+FROM dbo.Customers c
+LEFT JOIN dbo.Orders o
+    ON c.customer_id = o.customer_id
+
+GROUP BY 
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    c.city,
+    c.registration_date;
+GO
+
+
+-- ========================
+-- CHECK CURRENT DATABASE
+-- ========================
+SELECT DB_NAME() AS current_database;
+GO
