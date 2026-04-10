@@ -1,0 +1,104 @@
+/* =========================================
+   JOINS QUERIES
+   ========================================= */
+
+USE SQL_Project;
+GO
+
+-- ========================
+-- 17. ORDER + CUSTOMER DETAILS
+-- ========================
+SELECT 
+    o.order_id,
+    o.order_date,
+    o.order_status,
+    o.total_amount,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    c.email
+FROM Orders o
+LEFT JOIN Customers c
+    ON o.customer_id = c.customer_id;
+GO
+
+
+-- ========================
+-- 18. ORDER LINE DETAILS
+-- ========================
+SELECT 
+    o.order_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    p.product_name,
+    ca.category_name,
+    oi.quantity,
+    oi.line_total
+FROM Orders o
+JOIN Customers c
+    ON o.customer_id = c.customer_id
+JOIN Order_Items oi
+    ON o.order_id = oi.order_id   -- ✅ FIXED
+JOIN Products p
+    ON oi.product_id = p.product_id
+JOIN Categories ca
+    ON p.category_id = ca.category_id;
+GO
+
+
+-- ========================
+-- 19. CUSTOMERS WITH NO ORDERS
+-- ========================
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    c.email
+FROM Customers c
+LEFT JOIN Orders o
+    ON c.customer_id = o.customer_id
+WHERE o.customer_id IS NULL;
+GO
+
+
+-- ========================
+-- 20. PRODUCTS NEVER SOLD
+-- ========================
+SELECT 
+    p.product_id,
+    p.product_name,
+    p.stock_quantity
+FROM Products p
+LEFT JOIN Order_Items oi
+    ON p.product_id = oi.product_id
+WHERE oi.product_id IS NULL;
+GO
+
+
+-- ========================
+-- 21. PRODUCT SALES SUMMARY
+-- ========================
+SELECT 
+    p.product_name,
+    c.category_name,
+    SUM(oi.quantity) AS total_quantity_sold,
+    SUM(oi.line_total) AS total_revenue
+FROM Products p
+JOIN Categories c
+    ON p.category_id = c.category_id
+JOIN Order_Items oi
+    ON p.product_id = oi.product_id
+GROUP BY 
+    p.product_name,
+    c.category_name;
+GO
+
+
+-- ========================
+-- 22. SUPPLIER PURCHASE SUMMARY
+-- ========================
+SELECT 
+    s.supplier_name,
+    COUNT(po.purchase_id) AS total_purchase_orders,
+    SUM(po.total_cost) AS total_cost
+FROM Suppliers s
+LEFT JOIN Purchase_Orders po
+    ON s.supplier_id = po.supplier_id
+GROUP BY s.supplier_name;
+GO
