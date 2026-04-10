@@ -1,0 +1,123 @@
+/* =========================================
+   SUBQUERIES
+   ========================================= */
+
+USE SQL_Project;
+GO
+
+-- ========================
+-- 27. PRODUCTS ABOVE AVERAGE PRICE
+-- ========================
+SELECT 
+    p.product_id,
+    p.product_name,
+    p.price
+FROM Products p
+WHERE p.price > (
+    SELECT AVG(price) FROM Products
+);
+GO
+
+
+-- ========================
+-- 28. ORDERS ABOVE AVERAGE (EXCLUDING CANCELLED)
+-- ========================
+SELECT 
+    o.order_id,
+    o.customer_id,
+    o.total_amount
+FROM Orders o
+WHERE o.order_status <> 'CANCELLED'
+  AND o.total_amount > (
+        SELECT AVG(total_amount)
+        FROM Orders
+        WHERE order_status <> 'CANCELLED'
+  );
+GO
+
+
+-- ========================
+-- 29. CUSTOMERS WHO BOUGHT ELECTRONICS
+-- ========================
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name
+FROM Customers c
+WHERE c.customer_id IN (
+    SELECT o.customer_id
+    FROM Orders o
+    JOIN Order_Items oi ON o.order_id = oi.order_id
+    JOIN Products p ON oi.product_id = p.product_id
+    JOIN Categories cat ON p.category_id = cat.category_id
+    WHERE cat.category_name = 'Electronics'
+);
+GO
+
+
+-- ========================
+-- 30. PRODUCTS PURCHASED BUT NEVER SOLD
+-- ========================
+SELECT 
+    p.product_id,
+    p.product_name
+FROM Products p
+WHERE EXISTS (
+    SELECT 1 
+    FROM Purchase_Items pi 
+    WHERE pi.product_id = p.product_id
+)
+AND NOT EXISTS (
+    SELECT 1 
+    FROM Order_Items oi 
+    WHERE oi.product_id = p.product_id
+);
+GO
+
+
+-- ========================
+-- 31. CUSTOMER SPENDING + HIGH SPENDER FLAG
+-- ========================
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    ISNULL(cs.total_spent, 0) AS total_spent,
+
+    CASE 
+        WHEN ISNULL(cs.total_spent, 0) > avg_data.avg_spent THEN 'YES'
+        ELSE 'NO'
+    END AS is_high_spender
+
+FROM Customers c
+LEFT JOIN (
+    SELECT customer_id, SUM(total_amount) AS total_spent
+    FROM Orders
+    GROUP BY customer_id
+) cs 
+    ON c.customer_id = cs.customer_id
+
+CROSS JOIN (
+    SELECT AVG(total_spent) AS avg_spent
+    FROM (
+        SELECT SUM(total_amount) AS total_spent
+        FROM Orders
+        GROUP BY customer_id
+    ) t
+) avg_data;
+GO
+
+
+-- ========================
+-- 32. SECOND HIGHEST SPENDING CUSTOMER
+-- ========================
+SELECT customer_id, total_spent
+FROM (
+    SELECT 
+        customer_id,
+        SUM(total_amount) AS total_spent,
+        ROW_NUMBER() OVER (ORDER BY SUM(total_amount) DESC) AS rnk
+    FROM Orders
+    WHERE order_status <> 'CANCELLED'
+    GROUP BY customer_id
+) t
+WHERE rnk = 2;
+GO
